@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>D1～D16 LED 查修對照</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#edf3f0;color:#172c25;font-family:"Microsoft JhengHei",sans-serif;line-height:1.65}main{max-width:1120px;margin:auto;padding:24px}h1{font-size:26px;margin:0}p{margin:8px 0 18px}.sub{color:#53675f}.choices{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin:20px 0}button{font:inherit;cursor:pointer;border:1px solid #b4c6bc;background:white;color:#173f30;border-radius:8px;padding:9px}button[aria-pressed=true]{background:#155d42;color:white;border-color:#155d42}button:focus-visible{outline:3px solid #e0a61e;outline-offset:3px}.sheet{background:white;padding:20px;border-radius:14px;margin:16px 0}.info{font-size:18px;font-weight:600}.board-wrap{overflow-x:auto;background:#075b3e;border-radius:12px}.board-wrap svg{display:block;min-width:780px;width:100%;height:auto}.pcb text{font-family:Arial,"Microsoft JhengHei",sans-serif;fill:#e8f5ed;font-size:15px}.pcb .silk{fill:none;stroke:#9bc6b0;stroke-width:1.4}.pcb .pad{fill:#c7c8b3;stroke:#deeadc}.pcb .hit{fill:#ffe05a;stroke:#fff2ab;stroke-width:3}.pcb .link{fill:none;stroke:#ffe05a;stroke-width:3;stroke-linejoin:round}.pcb .pintext{fill:#102a20;font-size:13px;text-anchor:middle}.legend{color:#644b00;background:#fff6d3;padding:10px;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:9px;border-bottom:1px solid #dbe5df}tr.selected{background:#fff1b5}.table-wrap{overflow-x:auto}ol{padding-left:24px}footer{font-size:13px;color:#53675f}@media(max-width:600px){main{padding:14px}.choices{grid-template-columns:repeat(4,1fr)}h1{font-size:22px}.sheet{padding:14px}}@media print{body{background:white}.choices,.modes{display:none}.board-wrap svg{min-width:0}.sheet{padding:0}main{padding:0}}
+</style></head><body><main>
+<h1>D1～D16 LED 查修對照</h1><p class="sub">依提供的參考電路圖與元件面照片整理｜局部配置示意</p>
+<p>先點選不亮的 LED，黃色會標出對應電阻及 IC 輸入、輸出腳位。</p>
+<div class="choices" id="choices" aria-label="選擇LED"></div>
+<div class="modes"><button id="single" aria-pressed="true">單顆 LED 不亮</button> <button id="group" aria-pressed="false">這組 8 顆都不亮</button></div>
+<section class="sheet" aria-live="polite"><div id="heading" class="info"></div><div id="path"></div><div id="source"></div></section>
+<div class="board-wrap"><svg id="board" class="pcb" viewBox="0 0 1000 480" role="img" aria-label="LED、電阻、U1及U2的相關腳位位置"></svg></div>
+<p class="legend">黃色＝相關檢查點，不代表元件已故障。IC 缺口朝左；腳位由元件面觀看。連線表示電氣關係，並非實際銅箔走線。</p>
+<section class="sheet"><h2>建議檢查順序</h2><ol><li>斷電看 LED 方向、電阻與 IC 焊點，找空焊、連錫或斷線。</li><li>斷電量對應輸出腳到電阻、電阻到 LED，以及 LED 陰極到 GND 的導通；電阻本體應以電阻檔判讀。</li><li>通電先確認 IC 電源，再比較輸入、輸出與控制訊號。時脈與快速變化訊號需用示波器或邏輯探棒判斷。</li></ol><p>電路圖中各 LED 陽極經電阻接 IC 輸出，陰極接 GND；應亮的時段需有有效的高電位輸出。共用去耦電容為 U1：C1、U2：C2（均為 0.1µF），整組異常時一併檢查電源連接。</p></section>
+<section class="sheet"><h2>完整腳位表</h2><div class="table-wrap"><table><thead><tr><th>LED</th><th>電阻</th><th>IC</th><th>輸出腳</th><th>輸入腳</th><th>資料線</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<footer>正面照片標示 PV20231001，背面標示 V-10803TMBD；本圖以所提供正面照片配置與參考電路關係整理，實板請以導通量測核對。下方自行配線區不在本圖範圍內。</footer>
+</main><script>
+const outputs=[[2,5,6,9,12,15,16,19],[18,16,14,12,9,7,5,3]];
+const inputs=[[3,4,7,8,13,14,17,18],[2,4,6,8,11,13,15,17]];
+const u3=[14,15,16,17,18,19,12,13];
+const data=Array.from({length:16},(_,i)=>({n:i+1,chip:i<8?1:2,bit:i%8,out:outputs[i<8?0:1][i%8],input:inputs[i<8?0:1][i%8]}));
+let selected=1,all=false;
+const el=id=>document.getElementById(id);
+el('choices').innerHTML=data.map(d=>'<button data-n="'+d.n+'" aria-pressed="false">D'+d.n+'</button>').join('');
+el('rows').innerHTML=data.map(d=>'<tr data-row="'+d.n+'"><td>D'+d.n+'</td><td>R'+d.n+'／220Ω</td><td>U'+d.chip+'／'+(d.chip===1?'74LS273':'74LS244')+'</td><td>'+d.out+'</td><td>'+d.input+'</td><td>AD'+d.bit+'</td></tr>').join('');
+function render(){const d=data[selected-1];
+document.querySelectorAll('[data-n]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.n)===selected)));
+document.querySelectorAll('[data-row]').forEach(r=>r.className=Number(r.dataset.row)===selected?'selected':'');
+el('single').setAttribute('aria-pressed',String(!all));el('group').setAttribute('aria-pressed',String(all));
+el('heading').textContent=all?'D'+(d.chip===1?'1～D8':'9～D16')+' 整組不亮：先查共用條件':'D'+d.n+' 不亮：R'+d.n+'、U'+d.chip+' 第'+d.out+'腳輸出／第'+d.input+'腳輸入';
+el('path').textContent=all?(d.chip===1?'U1：20腳 VCC、10腳 GND、1腳 /RST 接 VCC、11腳 CLK 接 RCLK。':'U2：20腳 VCC、10腳 GND、1及19腳 /OE 接 GOE，低電位致能。'):'U'+d.chip+' 第'+d.out+'腳 → R'+d.n+'（220Ω）→ D'+d.n+' 陽極；D'+d.n+' 陰極 → GND。';
+el('source').textContent=all?(d.chip===1?'RCLK 來源：U3 第27腳。確認清除腳維持高電位，並有有效的時脈上升緣。':'GOE 來源：U3 第28腳。確認兩組致能腳都接妥。'):'資料來源：U3 第'+u3[d.bit]+'腳 → AD'+d.bit+' → '+(d.chip===1?'J1':'J2')+' → U'+d.chip+' 第'+d.input+'腳。';
+let s='<title>D'+d.n+'相關元件與腳位</title><rect class="silk" x="12" y="12" width="976" height="455" rx="4"/>';
+function tx(x,y,t,c=''){return '<text x="'+x+'" y="'+y+'" class="'+c+'">'+t+'</text>'}
+function chip(c,x){const active=c===d.chip; s+=tx(x+150,242,'U'+c+' · '+(c===1?'74LS273':'74LS244'));s+='<rect class="silk" x="'+x+'" y="258" width="370" height="80"/><path class="silk" d="M'+x+' 282 Q'+(x+25)+' 298 '+x+' 314"/>';s+=tx(x+113,306,'缺口朝左・元件面');
+const px=n=>x+23+(n<=10?n-1:20-n)*36;
+for(let n=1;n<=20;n++){const y=n<=10?350:246,hot=active&&(all?(c===1?[1,10,11,20]:[1,10,19,20]).includes(n):[d.out,d.input].includes(n));s+='<rect class="'+(hot?'hit':'pad')+'" x="'+(px(n)-12)+'" y="'+(y-10)+'" width="24" height="20"/>';s+=tx(px(n),y+5,n,'pintext');}
+return px;}
+for(let n=16;n>=1;n--){const x=55+(16-n)*59,hot=all?(n<=8)===(d.chip===1):n===selected;s+=tx(x-10,48,'D'+n);s+='<rect class="'+(hot?'hit':'silk')+'" x="'+(x-11)+'" y="60" width="22" height="32"/>';s+=tx(x-10,125,'R'+n);s+='<rect class="'+(!all&&n===selected?'hit':'silk')+'" x="'+(x-11)+'" y="138" width="22" height="32"/>';}
+const p2=chip(2,65),p1=chip(1,565);s+=tx(85,410,'J2：VCC、AD7～AD0、GOE');s+=tx(585,410,'J1：AD7～AD0、RCLK、GND');
+if(!all){const px=d.chip===1?p1:p2,xx=55+(16-selected)*59,oy=d.out<=10?360:236;s+='<path class="link" d="M'+px(d.out)+' '+oy+' V'+(d.out<=10?382:200)+' H'+(xx+19)+' V181 H'+xx+' V170 M'+xx+' 138 V92"/>';s+=tx(35,446,'黃色腳位：輸入 '+d.input+' ／ 輸出 '+d.out+'；先核對缺口方向再數腳。');}else s+=tx(35,446,'黃色腳位：電源、接地及控制訊號；也要確認共用接頭與電源來源。');
+el('board').innerHTML=s;}
+document.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{selected=Number(b.dataset.n);render()}));el('single').addEventListener('click',()=>{all=false;render()});el('group').addEventListener('click',()=>{all=true;render()});render();
+</script></body></html>
